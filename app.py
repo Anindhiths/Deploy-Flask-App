@@ -1,4 +1,4 @@
-# app.py
+# api/index.py
 
 import os
 import tempfile
@@ -187,7 +187,37 @@ async def process(
     file: UploadFile = File(...),
     weekly_budget: float = Form(3000)
 ):
-    # Save uploaded file to a temp file
+    # Save uploaded file to a temp file in /tmp
     input_suffix = os.path.splitext(file.filename)[1].lower()
     with tempfile.NamedTemporaryFile(delete=False, suffix=input_suffix, dir="/tmp") as temp_input:
+        temp_input.write(await file.read())
+        temp_input.flush()
+        input_path = temp_input.name
 
+    # Prepare output file path in /tmp
+    output_suffix = '.xlsx' if input_suffix in ['.xlsx', '.xls'] else '.csv'
+    with tempfile.NamedTemporaryFile(delete=False, suffix=output_suffix, dir="/tmp") as temp_output:
+        output_path = temp_output.name
+
+    try:
+        result_path = process_stock_data(input_path, output_path, weekly_budget)
+        filename = f"processed_{file.filename.rsplit('.',1)[0]}{output_suffix}"
+        return FileResponse(
+            result_path,
+            filename=filename,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            if output_suffix == '.xlsx' else "text/csv"
+        )
+    except Exception as e:
+        print("Error:", str(e))  # This will show up in Vercel logs
+        return JSONResponse(status_code=400, content={"error": str(e)})
+    finally:
+        try:
+            os.remove(input_path)
+        except Exception:
+            pass
+
+# Health check
+@app.get("/")
+def root():
+    return {"message": "Stock data processor is running."}
