@@ -189,4 +189,5 @@ async def process(
 ):
     # Save uploaded file to a temp file
     input_suffix = os.path.splitext(file.filename)[1].lower()
-    with tempfile.NamedTemporaryFile(delete=False, suffix=input_suffix)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=input_suffix, dir="/tmp") as temp_input:
+
