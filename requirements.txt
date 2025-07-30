@@ -1,2 +1,4 @@
-flask
-gunicorn
+Flask
+pandas
+numpy
+openpyxl
