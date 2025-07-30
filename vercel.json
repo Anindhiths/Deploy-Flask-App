@@ -1,10 +1,10 @@
 {
   "version": 2,
   "builds": [
-    { "src": "app.py", "use": "@vercel/python" }
+    { "src": "api/index.py", "use": "@vercel/python" }
   ],
   "routes": [
-    { "src": "/process", "methods": ["POST"], "dest": "app.py" },
-    { "src": "/.*", "dest": "app.py" }
+    { "src": "/process", "methods": ["POST"], "dest": "api/index.py" },
+    { "src": "/.*", "dest": "api/index.py" }
   ]
 }
