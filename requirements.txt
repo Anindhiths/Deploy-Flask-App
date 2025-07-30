@@ -1,4 +1,5 @@
-Flask
+fastapi
+uvicorn
 pandas
 numpy
 openpyxl
