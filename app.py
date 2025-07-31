@@ -29,8 +29,9 @@ def upload_file():
             return redirect(request.url)
         
         if file and allowed_file(file.filename):
-            # Get weekly budget from form
+            # Get weekly budget and profit percentage from form
             weekly_budget = float(request.form.get('weekly_budget', 3000))
+            profit_percentage = float(request.form.get('profit_percentage', 20))
             
             # Create temporary files
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_input:
@@ -39,7 +40,7 @@ def upload_file():
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as temp_output:
                     try:
                         # Process the file
-                        buy_txns, sell_txns = process_stock_data(temp_input.name, temp_output.name, weekly_budget)
+                        buy_txns, sell_txns = process_stock_data(temp_input.name, temp_output.name, weekly_budget, profit_percentage)
                         
                         # Send the processed file
                         return send_file(temp_output.name, 
@@ -63,7 +64,7 @@ def upload_file():
     
     return render_template('upload.html')
 
-def process_stock_data(input_file, output_file, weekly_budget=3000):
+def process_stock_data(input_file, output_file, weekly_budget=3000, profit_percentage=20):
     """
     Process stock data and generate buy signals based on weekly high breakouts
     Supports both CSV and Excel (.xlsx) formats for input and output files
@@ -72,6 +73,7 @@ def process_stock_data(input_file, output_file, weekly_budget=3000):
         input_file (str): Path to input CSV or Excel file
         output_file (str): Path to output CSV or Excel file
         weekly_budget (float): Weekly investment budget
+        profit_percentage (float): Profit target percentage for selling
     """
 
     # Determine file format and read accordingly
@@ -130,8 +132,8 @@ def process_stock_data(input_file, output_file, weekly_budget=3000):
                 if current_holdings > 0 and not sell_triggered:
                     average_buy_price = total_invested / total_quantity if total_quantity > 0 else 0
                     if average_buy_price > 0:
-                        profit_percentage = ((current_price - average_buy_price) / average_buy_price) * 100
-                        if profit_percentage >= 20:  # 20% profit target
+                        profit_percentage_current = ((current_price - average_buy_price) / average_buy_price) * 100
+                        if profit_percentage_current >= profit_percentage:  # Use dynamic profit target
                             sell_triggered = True
                             sell_price = current_price
                             sell_quantity = current_holdings  # Sell all holdings
